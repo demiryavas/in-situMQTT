@@ -1340,8 +1340,15 @@ mqtt_message* parse_raw_packet_subscribe_message(unsigned char* packet, uint32_t
     topic_count++;
   }
 
+#ifdef  USE_STATIC_ARRAY
+  if (topic_count > MAX_TOPICS) {
+    *parse_error = MQTT_ERR_NOMEM;
+    goto ERRORCASE;
+  }
+#else
   /* Allocate topic array */
   spld->topics = (mqtt_topic*)malloc(topic_count * sizeof(mqtt_topic));
+#endif
   /* Set back current position */
   buf.curpos = saved_current_pos;
   while (buf.curpos < buf.endpos) {
@@ -1401,7 +1408,14 @@ mqtt_message* parse_raw_packet_suback_message(unsigned char* packet, uint32_t le
 
   /* Suback Return Codes */
   msg->pld.suback_pld.retcode_count = buf.endpos - buf.curpos;
+#ifdef  USE_STATIC_ARRAY
+  if (msg->pld.suback_pld.retcode_count > MAX_TOPICS) {
+    *parse_error = MQTT_ERR_NOMEM;
+    goto ERRORCASE;
+  }
+#else
   msg->pld.suback_pld.return_codes = (uint8_t*)malloc(msg->pld.suback_pld.retcode_count * sizeof(uint8_t));
+#endif
   ptr = msg->pld.suback_pld.return_codes;
   for (uint32_t i=0; i<msg->pld.suback_pld.retcode_count; i++) {
     result = read_byte(&buf, ptr);
@@ -1683,8 +1697,15 @@ mqtt_message* parse_raw_packet_unsubscribe_message(unsigned char* packet, uint32
     topic_count++;
   }
 
+#ifdef USE_STATIC_ARRAY
+  if (topic_count > MAX_TOPICS) {
+    *parse_error = MQTT_ERR_NOMEM;
+    goto ERRORCASE;
+  }
+#else
   /* Allocate topic array */
   uspld->topics = (cstr_t*)malloc(topic_count * sizeof(cstr_t));
+#endif
   /* Set back current position */
   buf.curpos = saved_current_pos;
   while (buf.curpos < buf.endpos) {

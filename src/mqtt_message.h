@@ -3,12 +3,20 @@
 #define MQTT_MESSAGE_H_
 /*---------------------------------------------------------------------------*/
 
-#define MAX_SUBS_TOPICS_IN_ONE_MESSAGE 64
+#ifdef __cplusplus
+  extern "C" {
+#endif
 
 #ifdef WIN32
   #include <stdint.h>
 #else
   #include <inttypes.h>
+#endif
+
+#define  USE_STATIC_ARRAY
+
+#ifdef USE_STATIC_ARRAY
+  #define MAX_TOPICS 10
 #endif
 
 /* Function return codes */
@@ -134,22 +142,31 @@ typedef struct mqtt_publish_pld_t
 
 typedef struct mqtt_subscribe_pld_t
 {
+#ifdef USE_STATIC_ARRAY
+  mqtt_topic  topics[MAX_TOPICS];
+#else
   mqtt_topic* topics;      /* array of mqtt_topic instances continuous in memory */
-  //std::array<mqtt_topic, MAX_SUBS_TOPICS_IN_ONE_MESSAGE> topics;
-  //std::array<mqtt_topic, MAX_SUBS_TOPICS_IN_ONE_MESSAGE>* topics;
-  //std::vector<mqtt_topic> topics;
-  uint32_t     topic_count; /* not included in the message itself */
+#endif
+  uint32_t    topic_count; /* not included in the message itself */
 } mqtt_subscribe_pld;
 
 typedef struct mqtt_suback_pld_t
 {
+#ifdef USE_STATIC_ARRAY
+  uint8_t  return_codes[MAX_TOPICS];
+#else
   uint8_t* return_codes;  /* array of return codes continuous in memory */
+#endif
   uint32_t retcode_count; /* not included in the message itself */
 } mqtt_suback_pld;
 
 typedef struct mqtt_unsubscribe_pld_t
 {
+#ifdef USE_STATIC_ARRAY
+  cstr_t    topics[MAX_TOPICS];
+#else
   cstr_t*   topics;      /* array of topics continuous in memory */
+#endif
   uint32_t  topic_count; /* not included in the message itself */
 } mqtt_unsubscribe_pld;
 
@@ -289,5 +306,8 @@ int mqtt_message_read_variable_int(unsigned char* ptr, uint32_t length, uint32_t
  * Buffer shall be big enough to be able to cover all dumped info. */
 int mqtt_message_dump(mqtt_message* msg, cstr_t* sb, int print_raw);
 
+#ifdef __cplusplus
+  }
+#endif
 /*---------------------------------------------------------------------------*/
 #endif /* MQTT_MESSAGE_H_ */

@@ -2,6 +2,10 @@
 #ifndef MQTT_TYPES_H_
 #define MQTT_TYPES_H_
 /*---------------------------------------------------------------------------*/
+#ifdef __cplusplus
+  extern "C" {
+#endif
+
 #define MQTT_VERSION_3_1   3
 #define MQTT_VERSION_3_1_1 4
 #define MQTT_VERSION_5_0   5
@@ -61,6 +65,10 @@
 #define PK_PUBLISH_FLAG_DUP    0x08
 #define PK_PUBLISH_QOS         0x06
 #define PK_PUBLISH_FLAG_RETAIN 0x01
+
+#ifdef __cplusplus
+  }
+#endif
 
 /*---------------------------------------------------------------------------*/
 #endif /* MQTT_TYPES_H_ */

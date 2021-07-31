@@ -434,6 +434,19 @@ void building_test(void)
   mqtt_message_destroy(pubcomp);
 
   /* SUBSCRIBE */
+  mqtt_message* submsg = mqtt_message_create_empty();
+  submsg->packet_type = MQTT_SUBSCRIBE;
+#ifdef USE_STATIC_ARRAY
+  submsg->pld.subscribe_pld.topics[0].topic_filter.str = (unsigned char*)"sub/topic/one";
+  submsg->pld.subscribe_pld.topics[0].topic_filter.length = strlen("sub/topic/one");
+  submsg->pld.subscribe_pld.topics[0].qos = 2;
+  submsg->pld.subscribe_pld.topics[1].topic_filter.str = (unsigned char*)"sub/topic/two";
+  submsg->pld.subscribe_pld.topics[1].topic_filter.length = strlen("sub/topic/two");
+  submsg->pld.subscribe_pld.topics[1].qos = 0;
+  submsg->pld.subscribe_pld.topics[2].topic_filter.str = (unsigned char*)"sub/topic/three";
+  submsg->pld.subscribe_pld.topics[2].topic_filter.length = strlen("sub/topic/three");
+  submsg->pld.subscribe_pld.topics[2].qos = 1;
+#else
   mqtt_topic topics[3];
   topics[0].topic_filter.str = (unsigned char*)"sub/topic/one";
   topics[0].topic_filter.length = strlen((const char*)topics[0].topic_filter.str);
@@ -444,11 +457,11 @@ void building_test(void)
   topics[2].topic_filter.str = (unsigned char*)"sub/topic/three";
   topics[2].topic_filter.length = strlen((const char*)topics[2].topic_filter.str);
   topics[2].qos = 1;
-  mqtt_message* submsg = mqtt_message_create_empty();
-  submsg->packet_type = MQTT_SUBSCRIBE;
-  submsg->vh.subscribe_vh.packet_id = 45;
   submsg->pld.subscribe_pld.topics = &topics[0];
+#endif
   submsg->pld.subscribe_pld.topic_count = 3;
+  submsg->vh.subscribe_vh.packet_id = 45;
+
   ret = mqtt_message_build(submsg, NULL);
   if (ret == 0) {
     memset(buff.str, 0, buff.length);
@@ -464,7 +477,11 @@ void building_test(void)
   mqtt_message* suback = mqtt_message_create_empty();
   suback->packet_type = MQTT_SUBACK;
   suback->pld.suback_pld.retcode_count = 3;
+#ifdef USE_STATIC_ARRAY
+
+#else
   suback->pld.suback_pld.return_codes = malloc(suback->pld.suback_pld.retcode_count*sizeof(uint8_t));
+#endif
   suback->pld.suback_pld.return_codes[0] = 0;
   suback->pld.suback_pld.return_codes[1] = 2;
   suback->pld.suback_pld.return_codes[2] = 0x80; /* failure */
@@ -479,7 +496,9 @@ void building_test(void)
     printf("Problem on building suback example : %d\n", ret);
   }
   /* deallocate return-codes array */
+#ifndef USE_STATIC_ARRAY
   free(suback->pld.suback_pld.return_codes);
+#endif
   mqtt_message_destroy(suback);
 
   /* PUBLISH */
@@ -506,15 +525,22 @@ void building_test(void)
   mqtt_message_destroy(pubmsg);
 
   /* UNSUBSCRIBE */
+  mqtt_message* unsub = mqtt_message_create_empty();
+  unsub->packet_type = MQTT_UNSUBSCRIBE;
+  unsub->vh.unsubscribe_vh.packet_id = 46;
+#ifdef USE_STATIC_ARRAY
+  unsub->pld.unsub_pld.topics[0].str = (unsigned char*)"sub/topic/one";
+  unsub->pld.unsub_pld.topics[0].length = strlen("sub/topic/one");
+  unsub->pld.unsub_pld.topics[1].str = (unsigned char*)"sub/topic/three";
+  unsub->pld.unsub_pld.topics[1].length = strlen("sub/topic/three");
+#else
   cstr_t untopics[2];
   untopics[0].str = (unsigned char*)"sub/topic/one";
   untopics[0].length = strlen("sub/topic/one");
   untopics[1].str = (unsigned char*)"sub/topic/three";
   untopics[1].length = strlen("sub/topic/three");
-  mqtt_message* unsub = mqtt_message_create_empty();
-  unsub->packet_type = MQTT_UNSUBSCRIBE;
-  unsub->vh.unsubscribe_vh.packet_id = 46;
   unsub->pld.unsub_pld.topics = &untopics[0];
+#endif
   unsub->pld.unsub_pld.topic_count = 2;
   ret = mqtt_message_build(unsub, NULL);
   if (ret == 0) {
